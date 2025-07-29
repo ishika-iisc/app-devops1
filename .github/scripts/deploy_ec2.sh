@@ -1,8 +1,8 @@
 #!/bin/bash
 
 EC2_USER="ubuntu"            
-EC2_HOST="<EC2_PUBLIC_IP>"    
-KEY="your-key.pem"      
+EC2_HOST="13.235.82.253"    
+KEY="C:\Users\manas\Downloads\private_key.pem"      
 
 ssh -i $KEY $EC2_USER@$EC2_HOST << EOF
   # Update system and install required packages
@@ -15,14 +15,14 @@ ssh -i $KEY $EC2_USER@$EC2_HOST << EOF
   sudo usermod -aG docker ubuntu
 
   # Pull or update your repository
-  if [ ! -d "flask-devops-demo" ]; then
-      git clone https://github.com/<your-github-username>/flask-devops-demo.git
+  if [ ! -d "app-devops1" ]; then
+      git clone https://github.com/ishika-iisc/app-devops1.git
   else
-      cd flask-devops-demo && git pull
+      cd app-devops1 && git pull
   fi
 
   # Navigate to project and build Docker image
-  cd flask-devops-demo
+  cd app-devops1
   docker build -t flask-demo .
 
   # Stop and remove old container if exists
@@ -30,5 +30,5 @@ ssh -i $KEY $EC2_USER@$EC2_HOST << EOF
   docker rm flask-demo || true
 
   # Run new container on port 80 -> 5000
-  docker run -d -p 80:5000 --name flask-demo flask-demo
+  docker run -d -p 80:5000 --name flask-demo flask-demo:latest
 EOF

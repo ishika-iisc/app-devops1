@@ -1,0 +1,49 @@
+name: CI/CD Pipeline
+ 
+on: [push]
+ 
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+ 
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.10'
+ 
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+ 
+      - name: Build Docker image (test build locally in pipeline)
+        run: docker build -t flask-demo .
+ 
+  deploy:
+    needs: build-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+ 
+      - name: SSH & Deploy to EC2
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            sudo yum install git docker -y
+            sudo service docker start
+            sudo usermod -aG docker ec2-user
+ 
+            if [ ! -d "flask-devops-demo" ]; then
+            git clone https://github.com/${{ github.repository }}.git
+            else
+              cd flask-devops-demo && git pull
+            fi
+ 
+            cd flask-devops-demo
+            docker build -t flask-demo .
+            docker stop flask-demo || true
+            docker run -d -p 80:5000 --name flask-demo flask-demo
